@@ -1,0 +1,3 @@
+Pillow>=10
+openpyxl>=3.1
+TkinterDnD2>=0.3
