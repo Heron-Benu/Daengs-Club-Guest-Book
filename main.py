@@ -167,6 +167,7 @@ class DogPhotoTool(TkinterDnD.Tk):
         self.breeds = breeds
 
         self._build_ui()
+        self._lock_window_size()
 
     # ---------- UI 구성 ----------
 
@@ -175,27 +176,42 @@ class DogPhotoTool(TkinterDnD.Tk):
         root_frame = ttk.Frame(self, padding=10)
         root_frame.pack(fill="both", expand=True)
 
-        # --- 윗부분: 사진 드래그앤드롭 ---
+        # UI를 영역별로 분리하여 유지보수성을 높임
+        self._build_photo_area(root_frame)
+        self._build_customer_and_pet_area(root_frame)
+        self._build_notes_area(root_frame)
+        self._build_action_area(root_frame)
+
+        # 초기 품종 상태 반영
+        self.on_breed_selected()
+
+    def _build_photo_area(self, root_frame):
         photo_frame = ttk.LabelFrame(root_frame, text="사진 드래그 앤 드롭")
         photo_frame.pack(fill="x", padx=5, pady=5)
 
+        # 고정 크기 컨테이너로 이미지 삽입 시 레이아웃이 변하지 않도록 함
+        before_container = ttk.Frame(photo_frame, width=360, height=240)
+        after_container = ttk.Frame(photo_frame, width=360, height=240)
+        before_container.pack(side="left", padx=5, pady=5)
+        after_container.pack(side="left", padx=5, pady=5)
+        before_container.pack_propagate(False)
+        after_container.pack_propagate(False)
+
         self.before_label = ttk.Label(
-            photo_frame,
+            before_container,
             text="미용 전 사진\n(여기로 드롭 또는 클릭)",
             relief="sunken",
             anchor="center",
-            width=40,
         )
-        self.before_label.pack(side="left", padx=5, pady=5, fill="both", expand=True)
+        self.before_label.pack(fill="both", expand=True)
 
         self.after_label = ttk.Label(
-            photo_frame,
+            after_container,
             text="미용 후 사진\n(여기로 드롭 또는 클릭)",
             relief="sunken",
             anchor="center",
-            width=40,
         )
-        self.after_label.pack(side="left", padx=5, pady=5, fill="both", expand=True)
+        self.after_label.pack(fill="both", expand=True)
 
         # DnD 등록
         self.before_label.drop_target_register(DND_FILES)
@@ -207,7 +223,7 @@ class DogPhotoTool(TkinterDnD.Tk):
         self.before_label.bind("<Button-1>", lambda e: self.on_photo_click("before"))
         self.after_label.bind("<Button-1>", lambda e: self.on_photo_click("after"))
 
-        # --- 고객 / 강아지 정보 ---
+    def _build_customer_and_pet_area(self, root_frame):
         info_frame = ttk.LabelFrame(root_frame, text="고객 / 강아지 정보")
         info_frame.pack(fill="x", padx=5, pady=5)
 
@@ -283,7 +299,7 @@ class DogPhotoTool(TkinterDnD.Tk):
         self.breed_other_entry = ttk.Entry(row4, textvariable=self.breed_other_var, width=30, state="disabled")
         self.breed_other_entry.pack(side="left")
 
-        # --- 요구사항 / 특이사항 / 애프터 케어 ---
+    def _build_notes_area(self, root_frame):
         text_frame = ttk.LabelFrame(root_frame, text="요구사항 / 특이사항 / 애프터 케어")
         text_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
@@ -302,15 +318,20 @@ class DogPhotoTool(TkinterDnD.Tk):
         self.aftercare_text = tk.Text(text_frame, height=4)
         self.aftercare_text.pack(fill="both", expand=True)
 
-        # --- 실행 버튼 ---
+    def _build_action_area(self, root_frame):
         btn_frame = ttk.Frame(root_frame)
         btn_frame.pack(fill="x", pady=(8, 0))
 
         run_btn = ttk.Button(btn_frame, text="실행", command=self.on_run)
         run_btn.pack(side="right")
 
-        # 초기 품종 상태 반영
-        self.on_breed_selected()
+    def _lock_window_size(self):
+        """이미지 삽입 후에도 창 크기가 변하지 않도록 고정."""
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        self.minsize(width, height)
+        self.maxsize(width, height)
 
     # ---------- 플레이스홀더 / 입력 보조 ----------
 
